@@ -308,6 +308,7 @@
       <div class="envgrid" id="envgrid"></div>
 
       <button class="btn btn-primary" onclick="go('arena')">Run policies →</button>
+      <button class="btn btn-ghost" id="dlSimBtn" onclick="downloadSimScenes()">⬇ Download MuJoCo scenes (.zip)</button>
       <button class="btn btn-ghost" onclick="go('scan')">Rescan site</button>
     </section>
 
@@ -837,6 +838,149 @@
   }
 
   /* ---- scan screen: ground in the real SimReady scene ---- */
+  /* ---- World Builder, client-side: scenario -> MuJoCo MJCF (mirrors
+     worldbuilder/build_scene.py) so you can take the perturbed scenes to a sim ---- */
+  const AFF_GEOM = {
+    graspable:['cylinder',[0.035,0.10],'free',0.40],
+    hinge:    ['box',[0.18,0.02,0.22],'hinge',1.50],
+    slider:   ['box',[0.16,0.18,0.03],'slide',1.20],
+    button:   ['box',[0.02,0.02,0.01],null,0.05],
+    surface:  ['box',[0.20,0.20,0.01],null,0.00],
+    cavity:   ['box',[0.12,0.12,0.02],null,0.00],
+  };
+  const LIGHT_RIGS = {
+    default:['0.6 0 1.4','0.8 0.8 0.8','0.3 0.3 0.3'],
+    backlit:['-0.8 0 1.2','0.9 0.9 1.0','0.05 0.05 0.05'],
+    dusk:['0.6 0 1.0','0.35 0.30 0.45','0.10 0.10 0.15'],
+    harsh_overhead:['0.5 0 2.2','1.0 1.0 1.0','0.0 0.0 0.0'],
+  };
+  const f4 = v => (typeof v==='number' ? v.toFixed(4) : String(v));
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return h; }
+  function quatWxyz(pose){
+    const p = pose||[0,0,0.82,0,0,0,1];
+    const [x,y,z,qx=0,qy=0,qz=0,qw=1] = p;
+    return [[x,y,z],[qw,qx,qy,qz]];
+  }
+  function buildMJCF(scene, scenario){
+    const pert = scenario.perturbation || {};
+    const affs = (scene.scene_summary && scene.scene_summary.affordances) || [];
+    let mu = (pert.friction!=null) ? +pert.friction : 1.0;
+    const massScale = (pert.mass_scale!=null) ? +pert.mass_scale : 1.0;
+    if(pert.event==='slip') mu = Math.min(mu, 0.25);
+    const fric = `${f4(+mu.toFixed(3))} ${f4(0.005)} ${f4(0.0001)}`;
+    const repo = pert.reposition || {};
+    const rig = LIGHT_RIGS[pert.lighting] || LIGHT_RIGS.default;
+    const bodies=[]; const grasp=[];
+    for(const aff of affs){
+      const name=aff.name, kind=aff.type||'graspable';
+      const [shape,dims,joint,baseMass]=AFF_GEOM[kind]||AFF_GEOM.graspable;
+      let [[px,py,pz],[qw,qx,qy,qz]]=quatWxyz(aff.pose);
+      if(repo[name]){ const [dx=0,dy=0,dz=0]=repo[name]; px+=dx; py+=dy; pz+=dz; }
+      const size=dims.map(f4).join(' ');
+      let b=`    <body name="${esc(name)}" pos="${f4(px)} ${f4(py)} ${f4(pz)}" quat="${f4(qw)} ${f4(qx)} ${f4(qy)} ${f4(qz)}">`;
+      if(joint==='free'){ const m=Math.max(0.01,baseMass*massScale);
+        b+=`\n      <freejoint/>\n      <geom type="${shape}" size="${size}" mass="${m.toFixed(3)}" friction="${fric}" rgba="0.55 0.62 0.78 1"/>`;
+        grasp.push(name);
+      } else if(joint==='hinge'){
+        b+=`\n      <joint name="${esc(name)}_hinge" type="hinge" axis="0 0 1" range="0 1.8" damping="2"/>\n      <geom type="${shape}" size="${size}" mass="${(baseMass*massScale).toFixed(3)}" friction="${fric}" rgba="0.50 0.40 0.32 1"/>`;
+      } else if(joint==='slide'){
+        b+=`\n      <joint name="${esc(name)}_slide" type="slide" axis="1 0 0" range="0 0.35" damping="3"/>\n      <geom type="${shape}" size="${size}" mass="${(baseMass*massScale).toFixed(3)}" friction="${fric}" rgba="0.50 0.40 0.32 1"/>`;
+      } else {
+        b+=`\n      <geom type="${shape}" size="${size}" friction="${fric}" rgba="0.45 0.47 0.50 1"/>`;
+      }
+      b+=`\n    </body>`; bodies.push(b);
+    }
+    const distractors = pert.distractors || [];
+    distractors.forEach((gid,i)=>{
+      const ang=2*Math.PI*i/Math.max(1,distractors.length);
+      const dx=0.18*Math.cos(ang), dy=0.18*Math.sin(ang), h=hashStr(String(gid));
+      const shape=['box','cylinder','sphere'][h%3];
+      const size = shape==='box'?'0.0300 0.0300 0.0400':shape==='cylinder'?'0.0250 0.0500':'0.0350';
+      const r=(0.35+((h)&0xFF)/255*0.6).toFixed(2), g=(0.35+((h>>8)&0xFF)/255*0.6).toFixed(2), bl=(0.35+((h>>16)&0xFF)/255*0.6).toFixed(2);
+      bodies.push(`    <body name="distractor_${i}_${esc(gid)}" pos="${f4(0.5+dx)} ${f4(dy)} ${f4(0.86)}">\n      <freejoint/>\n      <geom type="${shape}" size="${size}" mass="0.20" friction="${fric}" rgba="${r} ${g} ${bl} 1"/>\n    </body>`);
+    });
+    const lights=`    <light pos="${rig[0]}" dir="0 0 -1" diffuse="${rig[1]}" ambient="${rig[2]}"/>`;
+    const sid=scene.scene_id||'scene';
+    const mjcf=`<mujoco model="sim2field-${esc(sid)}-${esc(scenario.id)}">
+  <compiler angle="radian" autolimits="true"/>
+  <option gravity="0 0 -9.81" integrator="implicitfast" timestep="0.002"/>
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.18 0.20 0.24" rgb2="0.22 0.24 0.28"
+             width="300" height="300"/>
+    <material name="grid" texture="grid" texrepeat="6 6" reflectance="0.1"/>
+    <material name="counter" rgba="0.30 0.33 0.40 1"/>
+  </asset>
+  <worldbody>
+${lights}
+    <geom name="floor" type="plane" size="2 2 0.1" material="grid"/>
+    <body name="counter" pos="0.5 0 0.40">
+      <geom type="box" size="0.45 0.45 0.02" material="counter" friction="${fric}"/>
+    </body>
+${bodies.join('\n')}
+  </worldbody>
+</mujoco>
+`;
+    const sc=scenario.success_criterion||{};
+    const manifest={ scene_id:sid, scenario_id:scenario.id, axis:scenario.axis, severity:scenario.severity,
+      instruction:pert.instruction||sc.predicate||'', success_predicate:sc.predicate||'',
+      horizon_s:sc.horizon_s||6.0, seeds:sc.seeds||5,
+      physics:{slide_friction:+mu.toFixed(3), mass_scale:massScale},
+      event: pert.event?{kind:pert.event,time_s:pert.event_time_s??null}:null,
+      sensor_noise:pert.sensor_noise||0.0, lighting:pert.lighting||'default',
+      grasp_targets:grasp, distractors, generation:scenario.generation||{scenery:'base_scan',physics:'mujoco'} };
+    return {mjcf, manifest};
+  }
+
+  /* ---- minimal store-only ZIP (no deps) ---- */
+  function crc32(bytes){
+    let c=~0; for(let i=0;i<bytes.length;i++){ c^=bytes[i]; for(let k=0;k<8;k++) c=(c>>>1)^(0xEDB88320 & -(c&1)); }
+    return (~c)>>>0;
+  }
+  function zipStore(files){   // files: [{name, text}]
+    const enc=new TextEncoder(); const chunks=[]; const central=[]; let off=0;
+    const u16=n=>[n&255,(n>>8)&255]; const u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
+    for(const f of files){
+      const data=enc.encode(f.text), name=enc.encode(f.name), crc=crc32(data);
+      const local=[...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+        ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0)];
+      chunks.push(Uint8Array.from(local), name, data);
+      central.push({crc,len:data.length,name,off});
+      off += local.length+name.length+data.length;
+    }
+    const cstart=off; const cd=[];
+    for(const c of central){
+      const h=[...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+        ...u32(c.crc),...u32(c.len),...u32(c.len),...u16(c.name.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(c.off)];
+      cd.push(Uint8Array.from(h), c.name); off+=h.length+c.name.length;
+    }
+    const end=[...u32(0x06054b50),...u16(0),...u16(0),...u16(central.length),...u16(central.length),
+      ...u32(off-cstart),...u32(cstart),...u16(0)];
+    return new Blob([...chunks,...cd,Uint8Array.from(end)],{type:'application/zip'});
+  }
+  function downloadSimScenes(){
+    const btn=$('dlSimBtn'); const orig=btn.textContent; btn.textContent='Building MJCF…';
+    try{
+      const files=[]; let ok=0;
+      for(const s of DATA.grid.scenarios){
+        const {mjcf,manifest}=buildMJCF(DATA.grid, s);
+        files.push({name:`scenes/${s.id}.xml`, text:mjcf});
+        files.push({name:`scenes/${s.id}.manifest.json`, text:JSON.stringify(manifest,null,2)});
+        ok++;
+      }
+      files.push({name:'README.txt', text:
+        `Sim2Field — MuJoCo scenes\nscene: ${DATA.grid.scene_id}\nauthored by: ${(DATA.grid._provenance||{}).planner||'fallback'}\n`
+        +`${ok} scenarios. Load any scenes/<id>.xml in MuJoCo (mujoco.MjModel.from_xml_path).\n`});
+      const url=URL.createObjectURL(zipStore(files));
+      const a=document.createElement('a'); a.href=url;
+      a.download=`sim2field_${(DATA.grid.scene_id||'scene')}_mjcf.zip`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+      btn.textContent=`⬇ Downloaded ${ok} scenes ✓`;
+      setTimeout(()=>{btn.textContent=orig;},2500);
+    }catch(e){ btn.textContent='Download failed'; setTimeout(()=>{btn.textContent=orig;},2500); }
+  }
+
   function buildScan(){
     const ss = (DATA.grid && DATA.grid.scene_summary) || {};
     const prov = (DATA.grid && DATA.grid._provenance) || {};
