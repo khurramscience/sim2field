@@ -1,0 +1,31 @@
+{
+  "scene_id": "kitchen-001",
+  "scenario_id": "dis-08",
+  "axis": "distractor",
+  "severity": "hard",
+  "instruction": "target manipulated despite distractors",
+  "success_predicate": "target manipulated despite distractors",
+  "horizon_s": 6.0,
+  "seeds": 5,
+  "physics": {
+    "slide_friction": 1.0,
+    "mass_scale": 1.0
+  },
+  "event": null,
+  "sensor_noise": 0.0,
+  "lighting": "default",
+  "grasp_targets": [
+    "bottle",
+    "mug"
+  ],
+  "distractors": [
+    "gso_mug_03",
+    "gso_box_07"
+  ],
+  "generation": {
+    "scenery": "scanned_objects",
+    "physics": "mujoco"
+  },
+  "source_dataset": "imagineio/PhysicalAI-SimReady-Kitchens-v1",
+  "render": null
+}

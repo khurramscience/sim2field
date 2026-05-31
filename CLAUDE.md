@@ -92,8 +92,9 @@ python scorer/build_report.py --rollouts data/rollouts --truth data/busybox_trut
 - [x] Mobile prototype (clickable, 6 screens incl. tap-to-inspect failure).
 - [x] Scenario Planner (Gemini + fallback), schema, mock executor, scorer with real metrics.
 - [x] End-to-end Phase A pipeline produces grid + rollouts + report.
+- [x] App reads real `data/report.json` + grid + rollouts (data-driven; embedded fallback for `file://`).
+- [x] World Builder emits MuJoCo MJCF + manifest per scenario (all 24 validated in MuJoCo).
 - [ ] Pushed to GitHub + Pages enabled.
-- [ ] App reads real data/report.json instead of hardcoded numbers.
 - [ ] Phase B: real policy in MuJoCo loop.
 - [ ] Genesis feature analysis.
 

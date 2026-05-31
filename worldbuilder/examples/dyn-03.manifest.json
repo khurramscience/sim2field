@@ -1,0 +1,32 @@
+{
+  "scene_id": "kitchen-001",
+  "scenario_id": "dyn-03",
+  "axis": "dynamics",
+  "severity": "hard",
+  "instruction": "policy recovers from slip and completes task",
+  "success_predicate": "policy recovers from slip and completes task",
+  "horizon_s": 6.0,
+  "seeds": 5,
+  "physics": {
+    "slide_friction": 0.25,
+    "mass_scale": 1.0
+  },
+  "event": {
+    "kind": "slip",
+    "time_s": 1.6,
+    "force_N": 0.0
+  },
+  "sensor_noise": 0.0,
+  "lighting": "default",
+  "grasp_targets": [
+    "bottle",
+    "mug"
+  ],
+  "distractors": [],
+  "generation": {
+    "scenery": "base_scan",
+    "physics": "mujoco"
+  },
+  "source_dataset": "imagineio/PhysicalAI-SimReady-Kitchens-v1",
+  "render": null
+}

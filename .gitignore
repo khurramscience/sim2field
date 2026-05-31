@@ -3,6 +3,7 @@ __pycache__/
 .env
 data/rollouts/
 data/scans/
+data/scenes/
 *.hdf5
 *.h5
 .DS_Store

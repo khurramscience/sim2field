@@ -26,11 +26,25 @@ Replace the mock for a single scenario to prove the loop is real.
   rollout_record (success, failure_time_s, failure_mode, uncertainty_trace, cross_sim).
 - Start with one (policy × scenario × 3 seeds); keep the mock for the rest.
 
-## 3. World Builder — implement `worldbuilder/build_scene.py`
-- Load an imagine.io SimReady-Kitchens scene → MuJoCo MJCF/USD.
-- Apply a scenario's `perturbation` (reposition / friction / mass / lighting / distractors).
-- Distractors pulled from Google Scanned Objects.
-- (Optional/demo) call Gemini/Veo for perception-axis renders; Genie 3 for layout variants.
+## 3. World Builder — implement `worldbuilder/build_scene.py`  ✅ DONE
+`build_scene.py` turns the scene + one scenario into a **MuJoCo MJCF** plus a
+runtime **manifest** the executor consumes. Pure-python emitter (no deps/network
+required); validates with `mujoco` when installed.
+- [x] Loads the scene (SimReady-Kitchens hook `maybe_load_simready`, offline-safe
+      fallback to the local scan).
+- [x] Applies each axis: spatial→translate body, physics→slide friction / mass
+      scale, dynamics→scheduled slip/drop/push event (+ low friction for slip),
+      perception→light rig swap + sensor_noise, language→carry instruction,
+      distractor→clutter bodies from Google Scanned Objects ids.
+- [x] Emits `<id>.xml` (MJCF) + `<id>.manifest.json` per scenario; `--scenario`,
+      `--all`, `--no-validate` flags.
+- [x] Gemini/Veo perception render + Genie 3 layout hooks present, guarded (no-op
+      without `GEMINI_API_KEY`).
+- Verified: all 24 scenes built and load in MuJoCo 3.9 (e.g. dyn-03 = 9 bodies /
+  9 geoms / 4 joints) and step 250 physics steps with finite state.
+- Output: `data/scenes/` (gitignored); two examples committed in
+  `worldbuilder/examples/`.
+- Run: `python worldbuilder/build_scene.py --scene data/kitchen.json --grid data/grid.json --all --out data/scenes`
 
 ## 4. Analyze Genesis for useful features (owner asked)
 Repo: https://github.com/Genesis-Embodied-AI/genesis-world

@@ -1,0 +1,40 @@
+<mujoco model="sim2field-kitchen-001-dyn-03">
+  <compiler angle="radian" autolimits="true"/>
+  <option gravity="0 0 -9.81" integrator="implicitfast" timestep="0.002"/>
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.18 0.20 0.24" rgb2="0.22 0.24 0.28"
+             width="300" height="300"/>
+    <material name="grid" texture="grid" texrepeat="6 6" reflectance="0.1"/>
+    <material name="counter" rgba="0.30 0.33 0.40 1"/>
+  </asset>
+  <worldbody>
+    <light pos="0.6 0 1.4" dir="0 0 -1" diffuse="0.8 0.8 0.8" ambient="0.3 0.3 0.3"/>
+    <geom name="floor" type="plane" size="2 2 0.1" material="grid"/>
+    <body name="counter" pos="0.5 0 0.40">
+      <geom type="box" size="0.45 0.45 0.02" material="counter" friction="0.2500 0.0050 0.0001"/>
+    </body>
+    <body name="cabinet_handle" pos="0.6200 0.1000 0.9500" quat="1.0000 0.0000 0.0000 0.0000">
+      <joint name="cabinet_handle_hinge" type="hinge" axis="0 0 1" range="0 1.8" damping="2"/>
+      <geom type="box" size="0.1800 0.0200 0.2200" mass="1.500" friction="0.2500 0.0050 0.0001" rgba="0.50 0.40 0.32 1"/>
+    </body>
+    <body name="faucet" pos="0.4000 -0.3000 0.8800" quat="1.0000 0.0000 0.0000 0.0000">
+      <joint name="faucet_slide" type="slide" axis="1 0 0" range="0 0.35" damping="3"/>
+      <geom type="box" size="0.1600 0.1800 0.0300" mass="1.200" friction="0.2500 0.0050 0.0001" rgba="0.50 0.40 0.32 1"/>
+    </body>
+    <body name="bottle" pos="0.5500 0.0500 0.8200" quat="1.0000 0.0000 0.0000 0.0000">
+      <freejoint/>
+      <geom type="cylinder" size="0.0350 0.1000" mass="0.400" friction="0.2500 0.0050 0.0001" rgba="0.55 0.62 0.78 1"/>
+    </body>
+    <body name="mug" pos="0.4800 0.1800 0.8200" quat="1.0000 0.0000 0.0000 0.0000">
+      <freejoint/>
+      <geom type="cylinder" size="0.0350 0.1000" mass="0.400" friction="0.2500 0.0050 0.0001" rgba="0.55 0.62 0.78 1"/>
+    </body>
+    <body name="drawer" pos="0.6000 -0.0500 0.5500" quat="1.0000 0.0000 0.0000 0.0000">
+      <joint name="drawer_slide" type="slide" axis="1 0 0" range="0 0.35" damping="3"/>
+      <geom type="box" size="0.1600 0.1800 0.0300" mass="1.200" friction="0.2500 0.0050 0.0001" rgba="0.50 0.40 0.32 1"/>
+    </body>
+    <body name="stove_knob" pos="0.3500 0.2500 0.9000" quat="1.0000 0.0000 0.0000 0.0000">
+      <geom type="box" size="0.0200 0.0200 0.0100" friction="0.2500 0.0050 0.0001" rgba="0.45 0.47 0.50 1"/>
+    </body>
+  </worldbody>
+</mujoco>
