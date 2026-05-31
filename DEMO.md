@@ -10,10 +10,24 @@ galley scene and serves the mobile app:
 # open http://localhost:8000/app/index.html  (phone: same URL, this machine's IP)
 ```
 
-To author the perturbation grid **live with Gemini** instead of the offline fallback:
+To author the perturbation grid **live with Gemini 3.5** instead of the offline fallback:
 
 ```bash
 GEMINI_API_KEY=...  ./demo.sh
+# pin a specific model:  GEMINI_MODEL=gemini-3.5-pro GEMINI_API_KEY=... ./demo.sh
+```
+
+To pull a **real (gated) SimReady scene** and run on it (needs an HF token with the
+dataset terms accepted):
+
+```bash
+# one-off: download + convert a real scene, then run the demo on it
+HF_TOKEN=hf_xxx  FETCH_SCENE=var_galley_0137d9bc  ./demo.sh
+
+# or just fetch + convert (browse ids first):
+python3 tools/fetch_simready.py --list | head
+HF_TOKEN=hf_xxx python3 tools/fetch_simready.py --index 10 --out data/galley_real.json
+SCENE=data/galley_real.json ./demo.sh
 ```
 
 Already have data and just want the UI:
@@ -43,9 +57,9 @@ Every number in the app comes from the pipeline run (`data/report.json`,
 
 | Piece | State |
 |---|---|
-| **imagine.io SimReady-Kitchens** | Real dataset (800 galley scenes); we ground in a real scene id. Asset meshes are gated (CC-BY-NC), so we use the scene's affordance layout, not the mesh files. `data/simready/catalog.json` is the real scene list pulled from the public HF API. |
-| **MuJoCo** | Real. All 24 generated scenes load and step in MuJoCo 3.x. |
-| **Gemini planner** | Real API call (`google-genai`); runs live with `GEMINI_API_KEY`, otherwise a deterministic, scene-aware fallback. Provenance is recorded in `grid._provenance.planner`. |
+| **imagine.io SimReady-Kitchens** | Real dataset (800 galley scenes). `data/simready/catalog.json` is the real scene list (public HF API). The assets are **gated** (CC-BY-NC) — `tools/fetch_simready.py` downloads a real scene and converts its 3D bounding boxes → affordances **when you supply an HF token** with terms accepted; `data/galley.json` is the committed offline scene used when no token is present. |
+| **MuJoCo** | Real. All 24 generated scenes load and step in MuJoCo 3.x; `--real` decides success from physics. |
+| **Gemini planner** | Real API call (`google-genai`); runs live with `GEMINI_API_KEY` (tries `gemini-3.5-pro` first, override via `GEMINI_MODEL`), otherwise a deterministic, scene-aware fallback. Provenance is in `grid._provenance.planner`. |
 | **Rollouts / leaderboard** | Mock executor — realistic, discriminative **placeholders**, not real policy runs yet. |
 | **Genie 3 / Veo / Scanned Objects** | Labeled provenance + guarded hooks; no live calls without keys. |
 

@@ -5,11 +5,19 @@
 #
 #   ./demo.sh            # rebuild data + serve on :8000
 #   ./demo.sh --serve    # just serve (use the committed data)
-#   GEMINI_API_KEY=...    ./demo.sh   # author the grid live with Gemini
+#   GEMINI_API_KEY=...    ./demo.sh   # author the grid live with Gemini (3.5)
+#   HF_TOKEN=...  FETCH_SCENE=var_galley_0137d9bc  ./demo.sh   # pull a REAL gated scene
 set -e
 cd "$(dirname "$0")"
 PORT="${PORT:-8000}"
 SCENE="${SCENE:-data/galley.json}"     # real SimReady galley scene (var_galley_0137d9bc)
+
+# Optionally pull a real (gated) SimReady scene first; needs HF_TOKEN + accepted terms.
+if [ -n "$FETCH_SCENE" ]; then
+  echo "▶ 0/4  Fetch real SimReady scene $FETCH_SCENE"
+  python3 tools/fetch_simready.py --scene "$FETCH_SCENE" --out data/galley_real.json
+  SCENE="data/galley_real.json"
+fi
 
 if [ "$1" != "--serve" ]; then
   echo "▶ 1/4  Scenario Planner  — perturbations from $SCENE"

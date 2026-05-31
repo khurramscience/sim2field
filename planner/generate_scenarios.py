@@ -105,7 +105,12 @@ def _gemini_grid(scene, n):
     # Use the newest available Gemini; fall back across model names so the call
     # works whichever generation the account/SDK exposes.
     model = os.environ.get("GEMINI_MODEL")
-    candidates = [model] if model else ["gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-pro"]
+    # Prefer the newest; fall back across names so the call works whichever
+    # generation the account/SDK exposes. Override with GEMINI_MODEL=...
+    candidates = [model] if model else [
+        "gemini-3.5-pro", "gemini-3.5-flash",
+        "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-pro",
+    ]
     try:
         from google import genai
         client = genai.Client(api_key=key)
