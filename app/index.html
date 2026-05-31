@@ -92,6 +92,16 @@
   @keyframes flash{0%{opacity:.85}100%{opacity:0}}
   .btn-row{display:flex;gap:10px}
   .btn-row .btn{flex:1}
+  .keybox{margin-top:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:10px 13px}
+  .keybox summary{cursor:pointer;font-size:12.5px;color:var(--lime);font-family:var(--mono);list-style:none}
+  .keybox summary::-webkit-details-marker{display:none}
+  .keybox[open] summary{margin-bottom:10px}
+  .keybox input{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:var(--mono);font-size:12px;padding:10px}
+  .keyrow{display:flex;gap:8px;margin-top:8px;align-items:stretch}
+  .keyrow select{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:var(--mono);font-size:11.5px;padding:8px}
+  .btn.keysave{margin-top:0;padding:8px 16px;width:auto;font-size:13px}
+  .keynote{font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.45}
+  .keybox.ok summary{color:var(--green)}
   .recdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:6px;animation:blink 1s steps(2) infinite;vertical-align:middle}
   @keyframes blink{50%{opacity:.25}}
 
@@ -249,6 +259,21 @@
       </div>
       <p class="sub" id="sc-source" style="margin-top:10px;font-size:11.5px">
         grounded in <b>imagine.io SimReady-Kitchens</b></p>
+
+      <details class="keybox" id="keybox">
+        <summary>🔑 Use my Gemini key — author perturbations from <i>my</i> photo</summary>
+        <input id="gemKey" type="password" placeholder="paste Gemini API key (AIza…)" autocomplete="off">
+        <div class="keyrow">
+          <select id="gemModel">
+            <option value="gemini-2.5-flash">gemini-2.5-flash (fast)</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+            <option value="gemini-3.5-pro">gemini-3.5-pro</option>
+            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          </select>
+          <button class="btn btn-ghost keysave" onclick="saveKey()">Save</button>
+        </div>
+        <p class="keynote">Stays in your browser (this session only). Never uploaded to the repo or any server except Google’s Gemini API.</p>
+      </details>
 
       <button class="btn btn-primary" id="scanBtn" onclick="onScanBtn()">📷 Scan live · use camera</button>
       <div class="btn-row" id="scanRow2" style="display:none">
@@ -473,15 +498,91 @@
     $('skipBtn').style.display='';
     camState='idle';
   }
-  function finishScan(){
-    // a real capture just happened; proceed into the SimReady-grounded pipeline
-    if($('vf-shot').getAttribute('src')){
-      const note=$('sc-source');
-      if(note && !/your capture/.test(note.innerHTML))
-        note.innerHTML = 'from <b>your live capture</b> · mapped onto ' + note.innerHTML;
-    }
+  /* ---- Gemini key (browser-only; never committed/served) ---- */
+  function getKey(){
+    try{ return sessionStorage.getItem('s2f_gem_key') || ''; }catch(e){ return window.__gemKey||''; }
+  }
+  function getModel(){
+    try{ return sessionStorage.getItem('s2f_gem_model') || 'gemini-2.5-flash'; }catch(e){ return 'gemini-2.5-flash'; }
+  }
+  function saveKey(){
+    const k=($('gemKey').value||'').trim(), m=$('gemModel').value;
+    try{ sessionStorage.setItem('s2f_gem_key',k); sessionStorage.setItem('s2f_gem_model',m); }
+    catch(e){ window.__gemKey=k; }
+    const kb=$('keybox'); kb.classList.toggle('ok', !!k);
+    kb.querySelector('summary').textContent = k
+      ? '🔑 Gemini key set · perturbations will be authored from your photo'
+      : '🔑 Use my Gemini key — author perturbations from my photo';
+    if(k) kb.removeAttribute('open');
+  }
+  function restoreKey(){
+    const k=getKey(); if(!k) return;
+    $('gemKey').value=k; $('gemModel').value=getModel();
+    const kb=$('keybox'); kb.classList.add('ok');
+    kb.querySelector('summary').textContent='🔑 Gemini key set · perturbations will be authored from your photo';
+  }
+
+  // Ask Gemini Vision to author a perturbation grid grounded in the captured photo.
+  async function geminiGridFromPhoto(jpegDataUrl){
+    const key=getKey(); if(!key) return null;
+    const model=getModel();
+    const b64 = jpegDataUrl.split(',')[1];
+    const sys = `You are Sim2Field's Scenario Planner. Look at this photo of a real robot deployment space. `
+      + `Identify the manipulable affordances you can SEE (graspable objects, hinges/doors, drawers/sliders, `
+      + `knobs/buttons, sinks/cavities, surfaces). Then author exactly 24 adversarial-but-physically-plausible `
+      + `evaluation scenarios that expose how a manipulation policy fails on THIS space, biased toward HARD cases, `
+      + `covering all six axes: spatial, physics, dynamics, perception, language, distractor.\n`
+      + `Return ONLY JSON: {"scene_id":"my_scan","scene_summary":{"domain":<str>,"layout":<str>,"surfaces":<int>,`
+      + `"affordances":[{"name":<str>,"type":"graspable|hinge|slider|button|cavity|surface","pose":[x,y,z,0,0,0,1]}]},`
+      + `"scenarios":[{"id":<str>,"axis":<one of the six>,"name":<short>,"severity":"easy|medium|hard",`
+      + `"perturbation":{...axis knobs: reposition|friction|mass_scale|event(+event_time_s)|lighting|sensor_noise|instruction|distractors...},`
+      + `"success_criterion":{"predicate":<str>,"horizon_s":6.0,"seeds":5}}]}`;
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+    const body={ contents:[{ parts:[ {text:sys}, {inline_data:{mime_type:'image/jpeg', data:b64}} ] }],
+                 generationConfig:{ response_mime_type:'application/json', temperature:0.9 } };
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){ throw new Error('Gemini '+res.status+' '+(await res.text()).slice(0,200)); }
+    const j=await res.json();
+    const txt=j?.candidates?.[0]?.content?.parts?.map(p=>p.text).join('')||'';
+    const grid=JSON.parse(txt);
+    if(!grid.scenarios || !grid.scenarios.length) throw new Error('empty grid');
+    grid._provenance={ planner:'gemini:'+model+' (vision, from your photo)',
+                       scene_source:{dataset:'live camera capture'} };
+    return grid;
+  }
+
+  async function finishScan(){
+    const shot=$('vf-shot').getAttribute('src');
+    const note=$('sc-source');
+    const key=getKey();
     resetScanState();
-    go('gen'); runGen();
+    go('gen');
+
+    if(shot && key){
+      // REAL path: author perturbations from the captured photo with Gemini Vision
+      setGenTitle('Reading your photo with Gemini…');
+      try{
+        const grid=await geminiGridFromPhoto(shot);
+        DATA.grid=grid;
+        buildScan(); buildEnvs();
+        if(note) note.innerHTML='from <b>your live capture</b> · authored by '+grid._provenance.planner;
+        setGenTitle('Authoring hard scenarios');
+        runGen(true);
+        return;
+      }catch(err){
+        setGenTitle('Gemini unavailable — using sample scene');
+        showGenNote('Gemini call failed ('+(err.message||err)+'). Falling back to the SimReady sample.');
+      }
+    } else if(shot && !key){
+      showGenNote('No Gemini key set — tap 🔑 on the Scan screen to author perturbations from your photo. Using the SimReady sample for now.');
+      if(note && !/your capture/.test(note.innerHTML))
+        note.innerHTML='from <b>your live capture</b> · mapped onto '+note.innerHTML;
+    }
+    runGen();
+  }
+  function setGenTitle(t){ const h=document.querySelector('[data-screen="gen"] h1'); if(h) h.textContent=t; }
+  function showGenNote(msg){
+    const p=document.querySelector('[data-screen="gen"] .sub'); if(p) p.textContent=msg;
   }
   function resetScanState(){   // reset buttons without clearing the shown shot
     $('scanRow2').style.display='none';
@@ -523,8 +624,8 @@
     ['Distractors &amp; novel objects','+4 envs'],
   ];
   let genRan=false;
-  function runGen(){
-    if(genRan){ document.getElementById('genpct').textContent='100%'; return; }
+  function runGen(force){
+    if(genRan && !force){ document.getElementById('genpct').textContent='100%'; return; }
     genRan=true;
     const log=document.getElementById('genlog'); log.innerHTML='';
     const pct=document.getElementById('genpct'); const btn=document.getElementById('genbtn');
@@ -754,6 +855,7 @@
   /* ---- boot ---- */
   (async function(){
     await loadData();
+    restoreKey();
     buildScan();
     buildEnvs();
     buildLeaderboard();
