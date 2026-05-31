@@ -94,8 +94,10 @@ python scorer/build_report.py --rollouts data/rollouts --truth data/busybox_trut
 - [x] End-to-end Phase A pipeline produces grid + rollouts + report.
 - [x] App reads real `data/report.json` + grid + rollouts (data-driven; embedded fallback for `file://`).
 - [x] World Builder emits MuJoCo MJCF + manifest per scenario (all 24 validated in MuJoCo).
+- [x] Grounded in real imagine.io SimReady-Kitchens galley scene (`data/galley.json`, catalog of 800 scenes).
+- [x] Phase B: scripted policy in a real MuJoCo loop (`--real`); friction/mass decide drops. VLA download is the remaining seam.
+- [x] One-command demo: `./demo.sh` (rebuild + serve) and `DEMO.md`.
 - [ ] Pushed to GitHub + Pages enabled.
-- [ ] Phase B: real policy in MuJoCo loop.
 - [ ] Genesis feature analysis.
 
 See **NEXT_STEPS.md** for the ordered task list.

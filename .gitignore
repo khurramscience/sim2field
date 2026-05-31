@@ -4,6 +4,7 @@ __pycache__/
 data/rollouts/
 data/scans/
 data/scenes/
+data/simready/*_metadata.json
 *.hdf5
 *.h5
 .DS_Store

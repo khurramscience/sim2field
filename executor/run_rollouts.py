@@ -10,7 +10,7 @@ Difficulty per axis/severity drives per-policy success probability so the
 generated leaderboard and heatmap are realistic and discriminative.
 """
 from __future__ import annotations
-import argparse, json, os, random
+import argparse, json, os, sys, random
 
 # relative policy competence (0..1) — MolmoAct2 best, scripted floor worst
 POLICY_SKILL = {"molmoact2":0.92, "dino-wm":0.84, "pi05":0.78, "scripted":0.55}
@@ -58,21 +58,60 @@ def _run(policy, grid, seed=0):
                                      "genesis": success if r.random()<0.85 else (not success)}})
     return out
 
+def _run_real(policy, grid, scenes_dir, seeds, scenario_id=None):
+    """Phase B: step the policy in a real MuJoCo loop for one (or every) scenario
+    that has a World-Builder MJCF + manifest. Falls back to nothing if a scene
+    hasn't been built. Records carry source='mujoco_real'."""
+    from executor.real_mujoco import run_real_rollout
+    scens = grid["scenarios"]
+    if scenario_id:
+        scens = [s for s in scens if s["id"] == scenario_id]
+        if not scens:
+            sys.exit(f"[executor] scenario '{scenario_id}' not in grid")
+    out = []
+    for s in scens:
+        sid = s["id"]
+        mjcf = os.path.join(scenes_dir, f"{sid}.xml")
+        man = os.path.join(scenes_dir, f"{sid}.manifest.json")
+        if not (os.path.exists(mjcf) and os.path.exists(man)):
+            print(f"[executor] skip {sid}: no MJCF/manifest in {scenes_dir} "
+                  f"(run worldbuilder/build_scene.py first)", file=sys.stderr)
+            continue
+        manifest = json.load(open(man))
+        for k in range(seeds):
+            out.append(run_real_rollout(policy, manifest, mjcf, seed=k))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--grid", required=True)
     ap.add_argument("--policy", required=True)
     ap.add_argument("--seeds", type=int, default=5)
     ap.add_argument("--mock", action="store_true", default=True)
+    ap.add_argument("--real", action="store_true",
+                    help="Phase B: step the policy in a real MuJoCo loop (needs built scenes)")
+    ap.add_argument("--scenes", default="data/scenes",
+                    help="dir of World-Builder MJCF+manifest (for --real)")
+    ap.add_argument("--scenario", help="single scenario id (for --real)")
     ap.add_argument("--out", default="data/rollouts")
     a = ap.parse_args()
     grid = json.load(open(a.grid))
     os.makedirs(a.out, exist_ok=True)
-    rollouts = _run(a.policy, grid)
+
+    if a.real:
+        rollouts = _run_real(a.policy, grid, a.scenes, a.seeds, a.scenario)
+        if not rollouts:
+            sys.exit("[executor] --real produced no rollouts (build scenes first)")
+        tag = "real"
+    else:
+        rollouts = _run(a.policy, grid)
+        tag = "mock"
+
     path = os.path.join(a.out, f"{a.policy}.json")
-    json.dump(rollouts, open(path,"w"))
-    succ = sum(r["success"] for r in rollouts)/len(rollouts)
-    print(f"[executor] {a.policy}: {len(rollouts)} rollouts -> {path}  (success {succ:.0%})")
+    json.dump(rollouts, open(path, "w"))
+    succ = sum(r["success"] for r in rollouts) / len(rollouts)
+    print(f"[executor] {a.policy} ({tag}): {len(rollouts)} rollouts -> {path}  (success {succ:.0%})")
 
 if __name__ == "__main__":
     main()

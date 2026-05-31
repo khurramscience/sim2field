@@ -1,16 +1,17 @@
 {
-  "scene_id": "kitchen-001",
+  "scene_id": "var_galley_0137d9bc",
   "scene_summary": {
     "domain": "kitchen",
-    "surfaces": 6,
+    "layout": "galley",
+    "surfaces": 8,
     "affordances": [
       {
-        "name": "cabinet_handle",
+        "name": "upper_cabinet_L",
         "type": "hinge",
         "pose": [
+          0.3,
           0.62,
-          0.1,
-          0.95,
+          1.45,
           0,
           0,
           0,
@@ -18,12 +19,12 @@
         ]
       },
       {
-        "name": "faucet",
+        "name": "lower_drawer_L",
         "type": "slider",
         "pose": [
-          0.4,
-          -0.3,
-          0.88,
+          0.3,
+          0.58,
+          0.55,
           0,
           0,
           0,
@@ -31,12 +32,51 @@
         ]
       },
       {
-        "name": "bottle",
+        "name": "sink_faucet",
+        "type": "slider",
+        "pose": [
+          0.42,
+          0.55,
+          0.98,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "sink_basin",
+        "type": "cavity",
+        "pose": [
+          0.42,
+          0.55,
+          0.86,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "stove_knob_front",
+        "type": "button",
+        "pose": [
+          0.66,
+          0.55,
+          0.92,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "kettle",
         "type": "graspable",
         "pose": [
           0.55,
-          0.05,
-          0.82,
+          0.5,
+          0.9,
           0,
           0,
           0,
@@ -48,8 +88,8 @@
         "type": "graspable",
         "pose": [
           0.48,
-          0.18,
-          0.82,
+          0.45,
+          0.88,
           0,
           0,
           0,
@@ -57,12 +97,12 @@
         ]
       },
       {
-        "name": "drawer",
-        "type": "slider",
+        "name": "plate",
+        "type": "graspable",
         "pose": [
           0.6,
-          -0.05,
-          0.55,
+          -0.45,
+          0.88,
           0,
           0,
           0,
@@ -70,12 +110,25 @@
         ]
       },
       {
-        "name": "stove_knob",
-        "type": "button",
+        "name": "fridge_handle",
+        "type": "hinge",
         "pose": [
-          0.35,
-          0.25,
-          0.9,
+          0.2,
+          -0.55,
+          1.1,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "dishwasher",
+        "type": "hinge",
+        "pose": [
+          0.55,
+          -0.58,
+          0.5,
           0,
           0,
           0,
@@ -88,11 +141,11 @@
     {
       "id": "spa-00",
       "axis": "spatial",
-      "name": "bottle moved +24cm",
+      "name": "kettle moved +24cm",
       "severity": "medium",
       "perturbation": {
         "reposition": {
-          "bottle": [
+          "kettle": [
             0.24,
             0.0,
             0.0
@@ -104,7 +157,7 @@
         "physics": "mujoco"
       },
       "success_criterion": {
-        "predicate": "task succeeds with bottle at new pose",
+        "predicate": "task succeeds with kettle at new pose",
         "horizon_s": 6.0,
         "seeds": 5
       }
@@ -112,7 +165,7 @@
     {
       "id": "phy-01",
       "axis": "physics",
-      "name": "Heavy drawer x1.4",
+      "name": "Heavy fridge_handle x1.4",
       "severity": "medium",
       "perturbation": {
         "mass_scale": 1.4
@@ -122,7 +175,7 @@
         "physics": "mjx"
       },
       "success_criterion": {
-        "predicate": "drawer lifted and placed",
+        "predicate": "fridge_handle lifted and placed",
         "horizon_s": 6.0,
         "seeds": 5
       }
@@ -148,7 +201,7 @@
     {
       "id": "dyn-03",
       "axis": "dynamics",
-      "name": "drawer slip event @ 1.6s",
+      "name": "fridge_handle slip event @ 1.6s",
       "severity": "hard",
       "perturbation": {
         "event": "slip",
@@ -224,44 +277,23 @@
     {
       "id": "lan-07",
       "axis": "language",
-      "name": "\"the stove - move it\"",
+      "name": "\"grab the dishwasher\"",
       "severity": "easy",
       "perturbation": {
-        "instruction": "the stove - move it"
+        "instruction": "grab the dishwasher"
       },
       "generation": {
         "scenery": "base_scan",
         "physics": "mujoco"
       },
       "success_criterion": {
-        "predicate": "policy grounds instruction to stove_knob",
+        "predicate": "policy grounds instruction to dishwasher",
         "horizon_s": 6.0,
         "seeds": 5
       }
     },
     {
       "id": "dis-08",
-      "axis": "distractor",
-      "name": "Cluttered counter (novel objects)",
-      "severity": "hard",
-      "perturbation": {
-        "distractors": [
-          "gso_mug_03",
-          "gso_box_07"
-        ]
-      },
-      "generation": {
-        "scenery": "scanned_objects",
-        "physics": "mujoco"
-      },
-      "success_criterion": {
-        "predicate": "target manipulated despite distractors",
-        "horizon_s": 6.0,
-        "seeds": 5
-      }
-    },
-    {
-      "id": "dis-09",
       "axis": "distractor",
       "name": "Cluttered counter (novel objects)",
       "severity": "hard",
@@ -282,14 +314,35 @@
       }
     },
     {
+      "id": "dis-09",
+      "axis": "distractor",
+      "name": "Cluttered counter (novel objects)",
+      "severity": "hard",
+      "perturbation": {
+        "distractors": [
+          "gso_can_11",
+          "gso_mug_03"
+        ]
+      },
+      "generation": {
+        "scenery": "scanned_objects",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "target manipulated despite distractors",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
       "id": "spa-10",
       "axis": "spatial",
-      "name": "faucet moved +12cm",
-      "severity": "easy",
+      "name": "fridge_handle moved +24cm",
+      "severity": "medium",
       "perturbation": {
         "reposition": {
-          "faucet": [
-            0.12,
+          "fridge_handle": [
+            0.24,
             0.0,
             0.0
           ]
@@ -300,7 +353,7 @@
         "physics": "mujoco"
       },
       "success_criterion": {
-        "predicate": "task succeeds with faucet at new pose",
+        "predicate": "task succeeds with fridge_handle at new pose",
         "horizon_s": 6.0,
         "seeds": 5
       }
@@ -308,10 +361,10 @@
     {
       "id": "phy-11",
       "axis": "physics",
-      "name": "Low-friction surface mu=0.24",
+      "name": "Low-friction surface mu=0.31",
       "severity": "hard",
       "perturbation": {
-        "friction": 0.24
+        "friction": 0.31
       },
       "generation": {
         "scenery": "base_scan",
@@ -326,17 +379,17 @@
     {
       "id": "phy-12",
       "axis": "physics",
-      "name": "Low-friction surface mu=0.27",
-      "severity": "hard",
+      "name": "Heavy sink_faucet x1.7",
+      "severity": "medium",
       "perturbation": {
-        "friction": 0.27
+        "mass_scale": 1.7
       },
       "generation": {
         "scenery": "base_scan",
-        "physics": "mujoco"
+        "physics": "mjx"
       },
       "success_criterion": {
-        "predicate": "object grasped and held without slip",
+        "predicate": "sink_faucet lifted and placed",
         "horizon_s": 6.0,
         "seeds": 5
       }
@@ -344,30 +397,11 @@
     {
       "id": "dyn-13",
       "axis": "dynamics",
-      "name": "stove_knob slip event @ 1.8s",
-      "severity": "hard",
-      "perturbation": {
-        "event": "slip",
-        "event_time_s": 1.8
-      },
-      "generation": {
-        "scenery": "base_scan",
-        "physics": "mujoco"
-      },
-      "success_criterion": {
-        "predicate": "policy recovers from slip and completes task",
-        "horizon_s": 6.0,
-        "seeds": 5
-      }
-    },
-    {
-      "id": "dyn-14",
-      "axis": "dynamics",
-      "name": "drawer external_push event @ 2.1s",
+      "name": "lower_drawer_L external_push event @ 3.2s",
       "severity": "hard",
       "perturbation": {
         "event": "external_push",
-        "event_time_s": 2.1
+        "event_time_s": 3.2
       },
       "generation": {
         "scenery": "base_scan",
@@ -380,26 +414,26 @@
       }
     },
     {
-      "id": "per-15",
-      "axis": "perception",
-      "name": "backlit + cam noise 0.13",
-      "severity": "medium",
+      "id": "dyn-14",
+      "axis": "dynamics",
+      "name": "sink_basin drop event @ 1.8s",
+      "severity": "hard",
       "perturbation": {
-        "lighting": "backlit",
-        "sensor_noise": 0.13
+        "event": "drop",
+        "event_time_s": 1.8
       },
       "generation": {
-        "scenery": "veo",
+        "scenery": "base_scan",
         "physics": "mujoco"
       },
       "success_criterion": {
-        "predicate": "task succeeds under degraded perception",
+        "predicate": "policy recovers from drop and completes task",
         "horizon_s": 6.0,
         "seeds": 5
       }
     },
     {
-      "id": "per-16",
+      "id": "per-15",
       "axis": "perception",
       "name": "harsh_overhead + cam noise 0.06",
       "severity": "medium",
@@ -418,19 +452,38 @@
       }
     },
     {
+      "id": "per-16",
+      "axis": "perception",
+      "name": "harsh_overhead + cam noise 0.08",
+      "severity": "hard",
+      "perturbation": {
+        "lighting": "harsh_overhead",
+        "sensor_noise": 0.08
+      },
+      "generation": {
+        "scenery": "veo",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "task succeeds under degraded perception",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
       "id": "lan-17",
       "axis": "language",
-      "name": "\"the mug - move it\"",
+      "name": "\"could you pick up that kettle\"",
       "severity": "easy",
       "perturbation": {
-        "instruction": "the mug - move it"
+        "instruction": "could you pick up that kettle"
       },
       "generation": {
         "scenery": "base_scan",
         "physics": "mujoco"
       },
       "success_criterion": {
-        "predicate": "policy grounds instruction to mug",
+        "predicate": "policy grounds instruction to kettle",
         "horizon_s": 6.0,
         "seeds": 5
       }
@@ -463,8 +516,8 @@
       "severity": "hard",
       "perturbation": {
         "distractors": [
-          "gso_bottle_22",
-          "gso_box_07"
+          "gso_box_07",
+          "gso_mug_03"
         ]
       },
       "generation": {
@@ -480,12 +533,12 @@
     {
       "id": "spa-20",
       "axis": "spatial",
-      "name": "mug moved -18cm",
-      "severity": "medium",
+      "name": "sink_faucet moved +24cm",
+      "severity": "easy",
       "perturbation": {
         "reposition": {
-          "mug": [
-            -0.18,
+          "sink_faucet": [
+            0.24,
             0.0,
             0.0
           ]
@@ -496,7 +549,7 @@
         "physics": "mujoco"
       },
       "success_criterion": {
-        "predicate": "task succeeds with mug at new pose",
+        "predicate": "task succeeds with sink_faucet at new pose",
         "horizon_s": 6.0,
         "seeds": 5
       }
@@ -504,17 +557,17 @@
     {
       "id": "phy-21",
       "axis": "physics",
-      "name": "Low-friction surface mu=0.25",
-      "severity": "hard",
+      "name": "Heavy kettle x1.7",
+      "severity": "medium",
       "perturbation": {
-        "friction": 0.25
+        "mass_scale": 1.7
       },
       "generation": {
         "scenery": "base_scan",
-        "physics": "mujoco"
+        "physics": "mjx"
       },
       "success_criterion": {
-        "predicate": "object grasped and held without slip",
+        "predicate": "kettle lifted and placed",
         "horizon_s": 6.0,
         "seeds": 5
       }
@@ -522,17 +575,17 @@
     {
       "id": "phy-22",
       "axis": "physics",
-      "name": "Heavy bottle x1.4",
+      "name": "Heavy lower_drawer_L x1.5",
       "severity": "medium",
       "perturbation": {
-        "mass_scale": 1.4
+        "mass_scale": 1.5
       },
       "generation": {
         "scenery": "base_scan",
         "physics": "mjx"
       },
       "success_criterion": {
-        "predicate": "bottle lifted and placed",
+        "predicate": "lower_drawer_L lifted and placed",
         "horizon_s": 6.0,
         "seeds": 5
       }
@@ -540,21 +593,32 @@
     {
       "id": "dyn-23",
       "axis": "dynamics",
-      "name": "drawer drop event @ 4.1s",
+      "name": "lower_drawer_L external_push event @ 2.8s",
       "severity": "hard",
       "perturbation": {
-        "event": "drop",
-        "event_time_s": 4.1
+        "event": "external_push",
+        "event_time_s": 2.8
       },
       "generation": {
         "scenery": "base_scan",
         "physics": "mujoco"
       },
       "success_criterion": {
-        "predicate": "policy recovers from drop and completes task",
+        "predicate": "policy recovers from external_push and completes task",
         "horizon_s": 6.0,
         "seeds": 5
       }
     }
-  ]
+  ],
+  "_provenance": {
+    "planner": "deterministic-fallback",
+    "scene_source": {
+      "dataset": "imagineio/PhysicalAI-SimReady-Kitchens-v1",
+      "url": "https://huggingface.co/datasets/imagineio/PhysicalAI-SimReady-Kitchens-v1",
+      "library": "https://simready-kitchens.imagine.io/",
+      "typology": "galley",
+      "license": "cc-by-nc-4.0",
+      "note": "Affordance set + poses reconstructed from a SimReady galley scene; asset meshes are gated and not redistributed here."
+    }
+  }
 }

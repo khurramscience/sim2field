@@ -1,0 +1,28 @@
+{
+  "scene_id": "var_galley_0137d9bc",
+  "source": {
+    "dataset": "imagineio/PhysicalAI-SimReady-Kitchens-v1",
+    "url": "https://huggingface.co/datasets/imagineio/PhysicalAI-SimReady-Kitchens-v1",
+    "library": "https://simready-kitchens.imagine.io/",
+    "typology": "galley",
+    "license": "cc-by-nc-4.0",
+    "note": "Affordance set + poses reconstructed from a SimReady galley scene; asset meshes are gated and not redistributed here."
+  },
+  "scene_summary": {
+    "domain": "kitchen",
+    "layout": "galley",
+    "surfaces": 8,
+    "affordances": [
+      {"name": "upper_cabinet_L",  "type": "hinge",     "pose": [0.30,  0.62, 1.45, 0,0,0,1]},
+      {"name": "lower_drawer_L",   "type": "slider",    "pose": [0.30,  0.58, 0.55, 0,0,0,1]},
+      {"name": "sink_faucet",      "type": "slider",    "pose": [0.42,  0.55, 0.98, 0,0,0,1]},
+      {"name": "sink_basin",       "type": "cavity",    "pose": [0.42,  0.55, 0.86, 0,0,0,1]},
+      {"name": "stove_knob_front", "type": "button",    "pose": [0.66,  0.55, 0.92, 0,0,0,1]},
+      {"name": "kettle",           "type": "graspable", "pose": [0.55,  0.50, 0.90, 0,0,0,1]},
+      {"name": "mug",              "type": "graspable", "pose": [0.48,  0.45, 0.88, 0,0,0,1]},
+      {"name": "plate",            "type": "graspable", "pose": [0.60, -0.45, 0.88, 0,0,0,1]},
+      {"name": "fridge_handle",    "type": "hinge",     "pose": [0.20, -0.55, 1.10, 0,0,0,1]},
+      {"name": "dishwasher",       "type": "hinge",     "pose": [0.55, -0.58, 0.50, 0,0,0,1]}
+    ]
+  }
+}

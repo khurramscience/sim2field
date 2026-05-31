@@ -100,23 +100,44 @@ def _fallback_grid(scene, n, seed=7):
     return {"scene_id":scene["scene_id"],"scene_summary":scene["scene_summary"],"scenarios":scenarios}
 
 def _gemini_grid(scene, n):
-    key = os.environ.get("GEMINI_API_KEY")
+    key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not key: return None
+    # Use the newest available Gemini; fall back across model names so the call
+    # works whichever generation the account/SDK exposes.
+    model = os.environ.get("GEMINI_MODEL")
+    candidates = [model] if model else ["gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-pro"]
     try:
         from google import genai
         client = genai.Client(api_key=key)
         user = f"SCHEMA: scenario.schema.json. Generate exactly {n} scenarios.\nSCENE:\n{json.dumps(scene,indent=2)}"
-        resp = client.models.generate_content(
-            model="gemini-2.5-pro",
-            config={"system_instruction":SYSTEM_PROMPT,"response_mime_type":"application/json"},
-            contents=user)
-        return json.loads(resp.text)
+        last = None
+        for m in [c for c in candidates if c]:
+            try:
+                resp = client.models.generate_content(
+                    model=m,
+                    config={"system_instruction": SYSTEM_PROMPT,
+                            "response_mime_type": "application/json"},
+                    contents=user)
+                grid = json.loads(resp.text)
+                grid.setdefault("_provenance", {})["planner"] = f"gemini:{m}"
+                print(f"[planner] authored grid with {m}", file=sys.stderr)
+                return grid
+            except Exception as e:
+                last = e
+        raise last or RuntimeError("no gemini model available")
     except Exception as e:
         print(f"[planner] Gemini unavailable ({e}); using deterministic fallback.", file=sys.stderr)
         return None
 
 def generate(scene, n=24):
-    return _gemini_grid(scene, n) or _fallback_grid(scene, n)
+    grid = _gemini_grid(scene, n)
+    if grid is None:
+        grid = _fallback_grid(scene, n)
+        grid.setdefault("_provenance", {})["planner"] = "deterministic-fallback"
+    # carry the source-dataset provenance from the scan onto the grid
+    if isinstance(scene, dict) and scene.get("source"):
+        grid.setdefault("_provenance", {})["scene_source"] = scene["source"]
+    return grid
 
 def main():
     ap = argparse.ArgumentParser()

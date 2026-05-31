@@ -18,13 +18,19 @@ leaderboard, the policy×axis heatmap, and the inspect view reflect the actual p
 - For inspect, read a chosen failing rollout's `uncertainty_trace` and draw the real sparkline.
 - Keep it a single self-contained file (no localStorage; in-memory only).
 
-## 2. Phase B — one real policy in MuJoCo (the credibility upgrade)
-Replace the mock for a single scenario to prove the loop is real.
-- Install: `pip install mujoco mujoco-mjx` (and the policy: MolmoAct 2 from Ai2 release, or DINO-WM).
-- In `executor/run_rollouts.py`, add a `--real` path: load a SimReady kitchen, apply ONE
-  perturbation (e.g. friction 0.28), step MuJoCo with the policy in the loop, log a real
-  rollout_record (success, failure_time_s, failure_mode, uncertainty_trace, cross_sim).
-- Start with one (policy × scenario × 3 seeds); keep the mock for the rest.
+## 2. Phase B — one real policy in MuJoCo (the credibility upgrade)  ✅ DONE (scripted)
+Real closed-loop physics for a single scenario, no GPU / no model download.
+- [x] `executor/real_mujoco.py`: load a World-Builder MJCF, step MuJoCo with a
+      scripted reach→grasp→lift→hold controller in the loop. The grip can only
+      hold `max_hold = μ·squeeze` (Coulomb), so friction/mass decide success;
+      uncertainty = real force-margin ratio; `reaction_steps` models batch-action
+      policies (the seam where MolmoAct 2 / DINO-WM plug in).
+- [x] `--real` path in `run_rollouts.py` (`--scenes`, `--scenario`); records
+      tagged `source="mujoco_real"`, schema-conformant.
+- Verified discriminative: μ≈0.25–0.31 → 0% (object physically drops), μ=1.0 →
+  100% even at 1.4× mass. Mock executor still drives the 24-scenario leaderboard.
+- Not done: downloading a real VLA checkpoint (no GPU here) — left as the plug-in
+  seam. Run: `python3 -m executor.run_rollouts --policy scripted --real --grid data/grid.json --scenario dyn-03 --seeds 5`
 
 ## 3. World Builder — implement `worldbuilder/build_scene.py`  ✅ DONE
 `build_scene.py` turns the scene + one scenario into a **MuJoCo MJCF** plus a
