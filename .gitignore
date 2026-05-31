@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.env
+data/rollouts/
+data/scans/
+*.hdf5
+*.h5
+.DS_Store
+node_modules/

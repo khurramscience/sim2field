@@ -1,0 +1,20 @@
+# --- Google / DeepMind stack ---
+google-genai>=0.3.0          # Gemini API (Scenario Planner)
+mujoco>=3.1.0                # physics-truth engine (Google DeepMind)
+mujoco-mjx>=3.1.0            # GPU/JAX physics (MuJoCo Playground)
+jax[cuda12]>=0.4.30          # MJX backend
+
+# --- policies under test ---
+# molmoact2  (install from Ai2 release)
+# dino-wm    (install from github.com/gaoyuezhou/dino_wm)
+
+# --- data / eval ---
+h5py>=3.10                  # BusyBox-compatible episode logging
+numpy>=1.26
+scipy>=1.12                 # Spearman rank correlation
+scikit-learn>=1.4           # calibration AUROC
+pillow>=10.0
+
+# --- app / serving ---
+fastapi>=0.110
+uvicorn>=0.29

@@ -1,0 +1,80 @@
+{
+  "policies": [
+    {
+      "policy": "molmoact2",
+      "success": 0.625
+    },
+    {
+      "policy": "pi05",
+      "success": 0.533
+    },
+    {
+      "policy": "dino-wm",
+      "success": 0.525
+    },
+    {
+      "policy": "scripted",
+      "success": 0.267
+    }
+  ],
+  "axes": [
+    "distractor",
+    "dynamics",
+    "language",
+    "perception",
+    "physics",
+    "spatial"
+  ],
+  "heatmap": {
+    "pi05": {
+      "distractor": 0.65,
+      "dynamics": 0.4,
+      "language": 0.8,
+      "perception": 0.6,
+      "physics": 0.467,
+      "spatial": 0.467
+    },
+    "scripted": {
+      "distractor": 0.2,
+      "dynamics": 0.0,
+      "language": 0.5,
+      "perception": 0.55,
+      "physics": 0.2,
+      "spatial": 0.4
+    },
+    "dino-wm": {
+      "distractor": 0.5,
+      "dynamics": 0.4,
+      "language": 0.7,
+      "perception": 0.55,
+      "physics": 0.467,
+      "spatial": 0.733
+    },
+    "molmoact2": {
+      "distractor": 0.45,
+      "dynamics": 0.24,
+      "language": 1.0,
+      "perception": 0.9,
+      "physics": 0.6,
+      "spatial": 0.933
+    }
+  },
+  "calibration": {
+    "auroc": 0.865
+  },
+  "cross_sim": {
+    "pi05": 0.858,
+    "scripted": 0.883,
+    "dino-wm": 0.842,
+    "molmoact2": 0.842
+  },
+  "sim2real": {
+    "spearman_rho": 0.8,
+    "policies": [
+      "pi05",
+      "scripted",
+      "dino-wm",
+      "molmoact2"
+    ]
+  }
+}

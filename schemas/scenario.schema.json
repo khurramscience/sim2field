@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sim2Field Scenario Grid",
+  "description": "Output of the Gemini Scenario Planner: a set of perturbed RL environments authored from a scanned deployment scene, plus the rollout record format the executor logs back.",
+  "type": "object",
+  "required": ["scene_id", "scene_summary", "scenarios"],
+  "properties": {
+    "scene_id": { "type": "string", "description": "id of the scanned source scene" },
+    "scene_summary": {
+      "type": "object",
+      "required": ["domain", "surfaces", "affordances"],
+      "properties": {
+        "domain": { "type": "string", "examples": ["kitchen", "warehouse_aisle", "production_cell"] },
+        "surfaces": { "type": "integer" },
+        "affordances": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "examples": ["cabinet_handle", "faucet", "bottle"] },
+              "type": { "type": "string", "enum": ["graspable", "hinge", "slider", "button", "surface", "cavity"] },
+              "pose": { "type": "array", "items": { "type": "number" }, "minItems": 7, "maxItems": 7,
+                        "description": "x,y,z, qx,qy,qz,qw" }
+            }
+          }
+        }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "description": "One entry per generated RL environment variation.",
+      "items": {
+        "type": "object",
+        "required": ["id", "axis", "name", "severity", "perturbation", "success_criterion"],
+        "properties": {
+          "id": { "type": "string" },
+          "axis": { "type": "string",
+            "enum": ["spatial", "physics", "dynamics", "perception", "language", "distractor"] },
+          "name": { "type": "string", "examples": ["Wet counter mu=0.28", "Bottle slip event"] },
+          "severity": { "type": "string", "enum": ["easy", "medium", "hard"] },
+          "perturbation": {
+            "type": "object",
+            "description": "Axis-specific knobs applied to the base scene.",
+            "properties": {
+              "reposition":   { "type": "object", "description": "spatial: object_id -> [dx,dy,dz]" },
+              "friction":     { "type": "number", "description": "physics: contact friction coefficient" },
+              "mass_scale":   { "type": "number", "description": "physics: multiplier on object mass" },
+              "event":        { "type": "string", "enum": ["slip", "drop", "external_push"] },
+              "event_time_s": { "type": "number" },
+              "lighting":     { "type": "string", "examples": ["backlit", "dusk", "harsh_overhead"] },
+              "sensor_noise": { "type": "number" },
+              "instruction":  { "type": "string", "description": "language: paraphrased command" },
+              "distractors":  { "type": "array", "items": { "type": "string",
+                                 "description": "Google Scanned Objects asset ids" } }
+            }
+          },
+          "generation": {
+            "type": "object",
+            "description": "Which generator produced the scene assets for this scenario.",
+            "properties": {
+              "scenery":  { "type": "string", "enum": ["genie3", "veo", "scanned_objects", "base_scan"] },
+              "physics":  { "type": "string", "enum": ["mujoco", "mjx", "genesis"] }
+            }
+          },
+          "success_criterion": {
+            "type": "object",
+            "required": ["predicate"],
+            "properties": {
+              "predicate": { "type": "string",
+                "examples": ["object 'bottle' placed on 'shelf' within 5cm", "drawer 'd1' opened > 0.15m"] },
+              "horizon_s": { "type": "number", "default": 6.0 },
+              "seeds": { "type": "integer", "default": 5 }
+            }
+          }
+        }
+      }
+    },
+
+    "rollout_record": {
+      "type": "object",
+      "description": "Format the executor logs per (policy x scenario x seed). Stored HDF5, BusyBox-compatible.",
+      "properties": {
+        "policy": { "type": "string" },
+        "scenario_id": { "type": "string" },
+        "seed": { "type": "integer" },
+        "success": { "type": "boolean" },
+        "time_to_success_s": { "type": ["number", "null"] },
+        "failure_time_s": { "type": ["number", "null"] },
+        "failure_mode": { "type": ["string", "null"],
+          "examples": ["grasp_slip_drop", "missed_affordance", "collision", "timeout"] },
+        "uncertainty_trace": { "type": "array", "items": { "type": "number" },
+          "description": "per-step scalar model uncertainty (for calibration AUROC)" },
+        "cross_sim": { "type": "object",
+          "description": "result under each physics backend, for agreement metric",
+          "additionalProperties": { "type": "boolean" } }
+      }
+    }
+  }
+}

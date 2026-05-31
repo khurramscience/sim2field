@@ -1,0 +1,560 @@
+{
+  "scene_id": "kitchen-001",
+  "scene_summary": {
+    "domain": "kitchen",
+    "surfaces": 6,
+    "affordances": [
+      {
+        "name": "cabinet_handle",
+        "type": "hinge",
+        "pose": [
+          0.62,
+          0.1,
+          0.95,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "faucet",
+        "type": "slider",
+        "pose": [
+          0.4,
+          -0.3,
+          0.88,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "bottle",
+        "type": "graspable",
+        "pose": [
+          0.55,
+          0.05,
+          0.82,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "mug",
+        "type": "graspable",
+        "pose": [
+          0.48,
+          0.18,
+          0.82,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "drawer",
+        "type": "slider",
+        "pose": [
+          0.6,
+          -0.05,
+          0.55,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "name": "stove_knob",
+        "type": "button",
+        "pose": [
+          0.35,
+          0.25,
+          0.9,
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "spa-00",
+      "axis": "spatial",
+      "name": "bottle moved +24cm",
+      "severity": "medium",
+      "perturbation": {
+        "reposition": {
+          "bottle": [
+            0.24,
+            0.0,
+            0.0
+          ]
+        }
+      },
+      "generation": {
+        "scenery": "genie3",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "task succeeds with bottle at new pose",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "phy-01",
+      "axis": "physics",
+      "name": "Heavy drawer x1.4",
+      "severity": "medium",
+      "perturbation": {
+        "mass_scale": 1.4
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mjx"
+      },
+      "success_criterion": {
+        "predicate": "drawer lifted and placed",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "phy-02",
+      "axis": "physics",
+      "name": "Low-friction surface mu=0.31",
+      "severity": "hard",
+      "perturbation": {
+        "friction": 0.31
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "object grasped and held without slip",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dyn-03",
+      "axis": "dynamics",
+      "name": "drawer slip event @ 1.6s",
+      "severity": "hard",
+      "perturbation": {
+        "event": "slip",
+        "event_time_s": 1.6
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "policy recovers from slip and completes task",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dyn-04",
+      "axis": "dynamics",
+      "name": "mug drop event @ 1.7s",
+      "severity": "hard",
+      "perturbation": {
+        "event": "drop",
+        "event_time_s": 1.7
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "policy recovers from drop and completes task",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "per-05",
+      "axis": "perception",
+      "name": "backlit + cam noise 0.13",
+      "severity": "medium",
+      "perturbation": {
+        "lighting": "backlit",
+        "sensor_noise": 0.13
+      },
+      "generation": {
+        "scenery": "veo",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "task succeeds under degraded perception",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "per-06",
+      "axis": "perception",
+      "name": "harsh_overhead + cam noise 0.07",
+      "severity": "medium",
+      "perturbation": {
+        "lighting": "harsh_overhead",
+        "sensor_noise": 0.07
+      },
+      "generation": {
+        "scenery": "veo",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "task succeeds under degraded perception",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "lan-07",
+      "axis": "language",
+      "name": "\"the stove - move it\"",
+      "severity": "easy",
+      "perturbation": {
+        "instruction": "the stove - move it"
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "policy grounds instruction to stove_knob",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dis-08",
+      "axis": "distractor",
+      "name": "Cluttered counter (novel objects)",
+      "severity": "hard",
+      "perturbation": {
+        "distractors": [
+          "gso_mug_03",
+          "gso_box_07"
+        ]
+      },
+      "generation": {
+        "scenery": "scanned_objects",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "target manipulated despite distractors",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dis-09",
+      "axis": "distractor",
+      "name": "Cluttered counter (novel objects)",
+      "severity": "hard",
+      "perturbation": {
+        "distractors": [
+          "gso_bottle_22",
+          "gso_mug_03"
+        ]
+      },
+      "generation": {
+        "scenery": "scanned_objects",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "target manipulated despite distractors",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "spa-10",
+      "axis": "spatial",
+      "name": "faucet moved +12cm",
+      "severity": "easy",
+      "perturbation": {
+        "reposition": {
+          "faucet": [
+            0.12,
+            0.0,
+            0.0
+          ]
+        }
+      },
+      "generation": {
+        "scenery": "genie3",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "task succeeds with faucet at new pose",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "phy-11",
+      "axis": "physics",
+      "name": "Low-friction surface mu=0.24",
+      "severity": "hard",
+      "perturbation": {
+        "friction": 0.24
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "object grasped and held without slip",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "phy-12",
+      "axis": "physics",
+      "name": "Low-friction surface mu=0.27",
+      "severity": "hard",
+      "perturbation": {
+        "friction": 0.27
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "object grasped and held without slip",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dyn-13",
+      "axis": "dynamics",
+      "name": "stove_knob slip event @ 1.8s",
+      "severity": "hard",
+      "perturbation": {
+        "event": "slip",
+        "event_time_s": 1.8
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "policy recovers from slip and completes task",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dyn-14",
+      "axis": "dynamics",
+      "name": "drawer external_push event @ 2.1s",
+      "severity": "hard",
+      "perturbation": {
+        "event": "external_push",
+        "event_time_s": 2.1
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "policy recovers from external_push and completes task",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "per-15",
+      "axis": "perception",
+      "name": "backlit + cam noise 0.13",
+      "severity": "medium",
+      "perturbation": {
+        "lighting": "backlit",
+        "sensor_noise": 0.13
+      },
+      "generation": {
+        "scenery": "veo",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "task succeeds under degraded perception",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "per-16",
+      "axis": "perception",
+      "name": "harsh_overhead + cam noise 0.06",
+      "severity": "medium",
+      "perturbation": {
+        "lighting": "harsh_overhead",
+        "sensor_noise": 0.06
+      },
+      "generation": {
+        "scenery": "veo",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "task succeeds under degraded perception",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "lan-17",
+      "axis": "language",
+      "name": "\"the mug - move it\"",
+      "severity": "easy",
+      "perturbation": {
+        "instruction": "the mug - move it"
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "policy grounds instruction to mug",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dis-18",
+      "axis": "distractor",
+      "name": "Cluttered counter (novel objects)",
+      "severity": "hard",
+      "perturbation": {
+        "distractors": [
+          "gso_bottle_22",
+          "gso_can_11"
+        ]
+      },
+      "generation": {
+        "scenery": "scanned_objects",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "target manipulated despite distractors",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dis-19",
+      "axis": "distractor",
+      "name": "Cluttered counter (novel objects)",
+      "severity": "hard",
+      "perturbation": {
+        "distractors": [
+          "gso_bottle_22",
+          "gso_box_07"
+        ]
+      },
+      "generation": {
+        "scenery": "scanned_objects",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "target manipulated despite distractors",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "spa-20",
+      "axis": "spatial",
+      "name": "mug moved -18cm",
+      "severity": "medium",
+      "perturbation": {
+        "reposition": {
+          "mug": [
+            -0.18,
+            0.0,
+            0.0
+          ]
+        }
+      },
+      "generation": {
+        "scenery": "genie3",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "task succeeds with mug at new pose",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "phy-21",
+      "axis": "physics",
+      "name": "Low-friction surface mu=0.25",
+      "severity": "hard",
+      "perturbation": {
+        "friction": 0.25
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "object grasped and held without slip",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "phy-22",
+      "axis": "physics",
+      "name": "Heavy bottle x1.4",
+      "severity": "medium",
+      "perturbation": {
+        "mass_scale": 1.4
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mjx"
+      },
+      "success_criterion": {
+        "predicate": "bottle lifted and placed",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    },
+    {
+      "id": "dyn-23",
+      "axis": "dynamics",
+      "name": "drawer drop event @ 4.1s",
+      "severity": "hard",
+      "perturbation": {
+        "event": "drop",
+        "event_time_s": 4.1
+      },
+      "generation": {
+        "scenery": "base_scan",
+        "physics": "mujoco"
+      },
+      "success_criterion": {
+        "predicate": "policy recovers from drop and completes task",
+        "horizon_s": 6.0,
+        "seeds": 5
+      }
+    }
+  ]
+}
